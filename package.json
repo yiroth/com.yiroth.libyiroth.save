@@ -1,0 +1,11 @@
+{
+  "name": "com.yiroth.libyiroth.save",
+  "displayName": "LibYiroth - Save",
+  "author": {
+    "name": "yiroth"
+  },
+  "version": "0.0.1",
+  "unity": "6000.3",
+  "description": "LibYiroth, Save",
+  "relatedPackages": {}
+}
