@@ -1,0 +1,17 @@
+{
+    "name": "LibYiroth.Save",
+    "rootNamespace": "LibYiroth.Save",
+    "references": [
+        "GUID:a5a511adc6762ea4b999421f0be7b855",
+        "GUID:38e73918b09b001469f9a9388072b54c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
