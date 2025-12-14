@@ -16,8 +16,10 @@
  * Purpose: A container for storing game data
  */
 
+using System;
 using System.Collections.Generic;
 using LibYiroth;
+using UnityEngine;
 
 namespace LibYiroth.Save
 {
@@ -32,7 +34,7 @@ namespace LibYiroth.Save
             return _id;
         }
 
-        public SaveKey(ref Data.Identification id, ref string variableName)
+        public SaveKey(Data.Identification id, string variableName)
         {
             _id = id;
             _variableName = variableName;
@@ -40,7 +42,27 @@ namespace LibYiroth.Save
 
         public bool Equals(SaveKey other)
         {
-            return this._id.Equals(other._id);
+            return _id.Equals(other._id) && _variableName == other._variableName;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is SaveKey other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(_id, _variableName);
+        }
+
+        public static bool operator ==(SaveKey left, SaveKey right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(SaveKey left, SaveKey right)
+        {
+            return !left.Equals(right);
         }
     }
     
@@ -49,38 +71,161 @@ namespace LibYiroth.Save
     {
         public Data.Identification id;
         public string variableName;
-        public Variant.Variant variable;
+        public Variant.Container container;
 
-        public SavedVariable(Data.Identification id, string variableName, Variant.Variant variable)
+        public SavedVariable(Data.Identification id, string variableName, Variant.Container container)
         {
             this.id = id;
             this.variableName = variableName;
-            this.variable = variable;
+            this.container = container;
         }
 
         public bool Equals(SavedVariable other)
         {
-            return this.id.Equals(other.id);
+            return id.Equals(other.id) && variableName == other.variableName && Equals(container, other.container);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is SavedVariable other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(id, variableName, container);
+        }
+
+        public static bool operator ==(SavedVariable left, SavedVariable right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(SavedVariable left, SavedVariable right)
+        {
+            return !left.Equals(right);
         }
     }
     
-    public class GameSlot
+    [System.Serializable]
+    public class GameSlot : ISerializationCallbackReceiver
     {
-        public string SlotName = string.Empty;
-        public Data.Date SaveDate;
-        public Data.Time SaveTime;
-        public int SlotVersion = 1;
-        public SortedSet<Data.Identification> UniqueIdentifications;
-        public Dictionary<SaveKey, SavedVariable> SavedVariables;
+        [SerializeField] private int _slotID = 0;
+        [SerializeField] private string _prettyName;
+        [SerializeField] private Data.Date _saveDate;
+        [SerializeField] private Data.Time _saveTime;
+        [SerializeField] private int _slotVersion;
+        
+        // Serialized form (JsonUtility-friendly):
+        [SerializeField] private List<SavedVariable> _savedVariablesList = new List<SavedVariable>();
 
-        public GameSlot()
+        // Runtime form (fast lookup):
+        [NonSerialized] private Dictionary<SaveKey, SavedVariable> _savedVariables;
+
+
+        public GameSlot(int id, int version)
         {
-            SavedVariables = new Dictionary<SaveKey, SavedVariable>();
+            _slotID = id;
+            _slotVersion = version;
+
+            _savedVariables = new Dictionary<SaveKey, SavedVariable>();
+            _savedVariablesList = new List<SavedVariable>();
+        }
+        
+        public void OnBeforeSerialize()
+        {
+            // Build list from dictionary
+            _savedVariablesList ??= new List<SavedVariable>();
+            _savedVariablesList.Clear();
+
+            if (_savedVariables == null)
+                return;
+
+            foreach (var pair in _savedVariables)
+                _savedVariablesList.Add(pair.Value);
         }
 
-        public Dictionary<SaveKey, SavedVariable> GetSavedSceneObjects()
+        public void OnAfterDeserialize()
         {
-            return SavedVariables;
+            // Build dictionary from list
+            _savedVariables = new Dictionary<SaveKey, SavedVariable>();
+
+            if (_savedVariablesList == null)
+                return;
+
+            foreach (var v in _savedVariablesList)
+            {
+                var key = new SaveKey(v.id, v.variableName);
+                if (!_savedVariables.TryAdd(key, v))
+                {
+                    // optional: log warning and keep the first value
+                    Debug.Log("Duplicate key: " + key + " found");
+                }
+            }
+        }
+
+        public int GetSlotID()
+        {
+            return _slotID;
+        }
+
+        public void SetPrettyName(string prettyName)
+        {
+            _prettyName = prettyName;
+        }
+
+        public void SetSaveDate(Data.Date saveDate)
+        {
+            _saveDate = saveDate;
+        }
+
+        public void SetSaveTime(Data.Time saveTime)
+        {
+            _saveTime = saveTime;
+        }
+
+        public int GetVersion()
+        {
+            return _slotVersion;
+        }
+
+        public bool UpdateVersion(int newVersion)
+        {
+            if (_slotVersion != newVersion && newVersion > _slotVersion)
+            {
+                // TODO: do logical update here
+                return true;
+            }
+
+            return false;
+        }
+
+        public void AddSavedVariable(SaveKey key, SavedVariable savedVariable)
+        {
+            _savedVariables ??= new Dictionary<SaveKey, SavedVariable>();
+            _savedVariables[key] = savedVariable;
+        }
+
+        public Dictionary<SaveKey, SavedVariable> GetSavedVariables()
+        {
+            _savedVariables ??= new Dictionary<SaveKey, SavedVariable>();
+            return _savedVariables;
+        }
+
+        public GameSlot Snapshot()
+        {
+            GameSlot save = new GameSlot(_slotID, _slotVersion);
+
+            if (_savedVariables != null)
+            {
+                foreach (var pair in _savedVariables)
+                {
+                    var v = pair.Value;
+                    var containerCopy = v.container != null ? v.container.Clone() : null;
+                    save._savedVariables[pair.Key] = new SavedVariable(v.id, v.variableName, containerCopy);
+                }
+            }
+
+            return save;
         }
     }
 }
