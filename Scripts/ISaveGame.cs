@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Purpose: An interface to help objects interact with save system
+ * Purpose: An interface to help objects interact with the save system
  */
 
 namespace LibYiroth.Save

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Purpose: Manager component for saving/loading the game and storing/processing game slots
+ * Purpose: A component for managing the game slots
  */
 
 using System;

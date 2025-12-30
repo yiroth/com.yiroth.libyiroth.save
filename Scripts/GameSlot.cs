@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Purpose: A container for storing game data
+ * Purpose: A container for storing the game data
  */
 
 using System;
