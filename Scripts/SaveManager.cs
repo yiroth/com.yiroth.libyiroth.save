@@ -130,7 +130,7 @@ namespace LibYiroth.Save
 
         public bool IsCurrentGameSlotActive()
         {
-            return _activeGameSlot != null;
+            return Helper.Cardinal.IsValid(_activeGameSlot);
         }
     }
 }

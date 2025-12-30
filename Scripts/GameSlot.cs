@@ -215,14 +215,13 @@ namespace LibYiroth.Save
         {
             GameSlot save = new GameSlot(_slotID, _slotVersion);
 
-            if (_savedVariables != null)
+            if (Helper.Cardinal.IsNotValid(_savedVariables)) return save;
+            
+            foreach (var pair in _savedVariables)
             {
-                foreach (var pair in _savedVariables)
-                {
-                    var v = pair.Value;
-                    var containerCopy = v.container != null ? v.container.Clone() : null;
-                    save._savedVariables[pair.Key] = new SavedVariable(v.id, v.variableName, containerCopy);
-                }
+                var v = pair.Value;
+                var containerCopy = Helper.Cardinal.IsValid(v.container) ? v.container.Clone() : null;
+                save._savedVariables[pair.Key] = new SavedVariable(v.id, v.variableName, containerCopy);
             }
 
             return save;
